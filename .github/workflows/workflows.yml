@@ -13,10 +13,6 @@ jobs:
   terraform-setup:
     name: Setup Terraform
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: .
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -24,22 +20,21 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v1
         with:
-          terraform_version: 1.9.6  # Your Terraform version
+          terraform_version: 1.9.6
 
       - name: Set up AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ca-central-1
-        
+          aws-region: ca-central-1  # Make sure the region is consistent
+
       - name: Check AWS credentials
-        run: aws sts get-caller-identity
-        
+        run: aws sts get-caller-identity  # To verify that the credentials are correct
 
   validate:
     name: Validate Terraform
-    needs: terraform-setup
+    needs: terraform-setup  # Ensure this job runs after terraform-setup is complete
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -60,22 +55,9 @@ jobs:
       - name: Run Checkov Scan (Optional)
         run: checkov -d .
 
-  on-pull-request:
-    name: Pull Request Check
-    needs: validate
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Initialize Terraform
-        run: terraform init -backend-config="bucket=dheerajvarma-terraform-state-bucket" -backend-config="key=training/terraform.tfstate" -backend-config="region=ca-central-1" -backend-config="dynamodb_table=dheerajvarma-terraform-lock-table"
-
-      - name: Terraform Plan
-        run: terraform plan
-
   apply:
     name: Apply Terraform on Merge
+    needs: validate  # Ensure apply happens only after validation succeeds
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
 
