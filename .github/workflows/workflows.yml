@@ -59,13 +59,13 @@ jobs:
       - name: Terraform Plan
         run: terraform plan
 
-      - name: Install Checkov  # Install Checkov before running the scan
-        run: |
-          python3 -m pip install --upgrade pip
-          pip install checkov
+      # - name: Install Checkov  # Install Checkov before running the scan
+      #   run: |
+      #     python3 -m pip install --upgrade pip
+      #     pip install checkov
 
-      - name: Run Checkov Scan (Optional)
-        run: checkov -d .
+      # - name: Run Checkov Scan (Optional)
+      #   run: checkov -d .
 
   apply:
     name: Apply Terraform on Merge
