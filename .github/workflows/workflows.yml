@@ -1,0 +1,91 @@
+name: Terraform Pipeline
+
+on:
+  push:
+    branches:
+      - '*'
+  pull_request:
+    branches:
+      - '*'
+  workflow_dispatch:
+
+jobs:
+  terraform-setup:
+    name: Setup Terraform
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: 1.9.6
+
+      - name: Set up AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ca-central-1
+
+      - name: Check AWS credentials
+        run: aws sts get-caller-identity
+
+  validate:
+    name: Validate Terraform
+    needs: terraform-setup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ca-central-1
+
+      - name: Initialize Terraform
+        run: terraform init -backend-config="bucket=dheerajvarma-terraform-state-bucket" -backend-config="key=training/terraform.tfstate" -backend-config="region=ca-central-1" -backend-config="dynamodb_table=dheerajvarma-terraform-lock-table"
+
+      - name: Validate Terraform
+        run: terraform validate
+
+      - name: Format Terraform
+        run: terraform fmt -check
+
+      - name: Terraform Plan
+        run: terraform plan
+
+      # - name: Install Checkov  # Install Checkov before running the scan
+      #   run: |
+      #     python3 -m pip install --upgrade pip
+      #     pip install checkov
+
+      # - name: Run Checkov Scan (Optional)
+      #   run: checkov -d .
+
+  apply:
+    name: Apply Terraform on Merge
+    needs: validate
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ca-central-1
+
+      - name: Initialize Terraform
+        run: terraform init -backend-config="bucket=dheerajvarma-terraform-state-bucket" -backend-config="key=training/terraform.tfstate" -backend-config="region=ca-central-1" -backend-config="dynamodb_table=dheerajvarma-terraform-lock-table"
+
+      - name: Apply Terraform
+        run: terraform apply -auto-approve
