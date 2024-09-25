@@ -27,10 +27,10 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ca-central-1  # Make sure the region is consistent
+          aws-region: ca-central-1
 
       - name: Check AWS credentials
-        run: aws sts get-caller-identity  # To verify that the credentials are correct
+        run: aws sts get-caller-identity
 
   validate:
     name: Validate Terraform
@@ -39,6 +39,13 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+
+      - name: Set up AWS credentials  # Add credentials setup here
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ca-central-1
 
       - name: Initialize Terraform
         run: terraform init -backend-config="bucket=dheerajvarma-terraform-state-bucket" -backend-config="key=training/terraform.tfstate" -backend-config="region=ca-central-1" -backend-config="dynamodb_table=dheerajvarma-terraform-lock-table"
@@ -64,6 +71,13 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+
+      - name: Set up AWS credentials  # Add credentials setup here as well
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ca-central-1
 
       - name: Initialize Terraform
         run: terraform init -backend-config="bucket=dheerajvarma-terraform-state-bucket" -backend-config="key=training/terraform.tfstate" -backend-config="region=ca-central-1" -backend-config="dynamodb_table=dheerajvarma-terraform-lock-table"
