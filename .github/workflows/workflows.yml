@@ -31,7 +31,11 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ca-central-1  # Match your region in provider.tf
+          aws-region: ca-central-1
+        
+      - name: Check AWS credentials
+        run: aws sts get-caller-identity
+        
 
   validate:
     name: Validate Terraform

@@ -1,6 +1,6 @@
 # Lookup the secret in AWS Secrets Manager
 data "aws_secretsmanager_secret" "db_credentials" {
-  name = "db-instance"  # Replace with your secret name
+  name = "db-instance" # Replace with your secret name
 }
 
 data "aws_secretsmanager_secret_version" "db_secret_version" {
